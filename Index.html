@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Research Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&family=Bebas+Neue&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Tokens ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #f7f6f2;
+      --surface:  #ffffff;
+      --border:   rgba(0,0,0,0.07);
+      --accent:   #5b5bd6;
+      --accent-light: #ededfb;
+      --text-1:   #111111;
+      --text-2:   #666666;
+      --text-3:   #aaaaaa;
+      --success:  #16a34a;
+      --success-bg: #dcfce7;
+      --radius:   18px;
+      --radius-sm: 10px;
+      --shadow:   0 2px 24px rgba(0,0,0,0.07);
+      --font-display: 'DM Serif Display', serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text-1);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Nav ── */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.1rem 2.5rem;
+      background: rgba(247,246,242,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-logo {
+      font-family: var(--font-display);
+      font-size: 18px;
+      color: var(--text-1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-logo span {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-badge {
+      background: var(--text-1);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 5px 13px;
+      border-radius: 20px;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      text-align: center;
+      padding: 5rem 2rem 3.5rem;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      background: var(--accent-light);
+      padding: 5px 14px;
+      border-radius: 20px;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-eyebrow::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    .hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(38px, 7vw, 58px);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--text-1);
+      margin-bottom: 1rem;
+    }
+
+    .hero h1 em {
+  font-family: 'Bebas Neue', sans-serif;
+  font-style: normal;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+  font-size: 1.05em;
+     }
+
+    .hero-sub {
+      font-size: 16px;
+      color: var(--text-2);
+      max-width: 400px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.7;
+      font-weight: 300;
+    }
+
+    /* ── Search ── */
+    .search-container {
+      max-width: 580px;
+      margin: 0 auto 1rem;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      padding: 6px 6px 6px 20px;
+      gap: 8px;
+      box-shadow: var(--shadow);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-box:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(91,91,214,0.08), var(--shadow);
+    }
+
+    .search-icon {
+      color: var(--text-3);
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    #topicInput {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      color: var(--text-1);
+      background: transparent;
+      font-family: var(--font-body);
+      font-weight: 400;
+    }
+
+    #topicInput::placeholder { color: var(--text-3); }
+
+    #researchBtn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 11px 22px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: var(--font-body);
+      transition: background 0.2s, transform 0.1s, opacity 0.2s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #researchBtn:hover { background: #4a4ac4; }
+    #researchBtn:active { transform: scale(0.98); }
+    #researchBtn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .chips {
+      display: flex;
+      gap: 7px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 4rem;
+    }
+
+    .chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12px;
+      color: var(--text-2);
+      cursor: pointer;
+      transition: all 0.18s;
+      font-weight: 400;
+    }
+
+    .chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    /* ── Error ── */
+    .error-box {
+      max-width: 580px;
+      margin: 0 auto 1rem;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #dc2626;
+      display: none;
+    }
+    .error-box.visible { display: block; }
+
+    /* ── Main content ── */
+    .content {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 2rem 5rem;
+    }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Agent Progress ── */
+    .progress-section {
+      display: none;
+      margin-bottom: 2rem;
+    }
+    .progress-section.visible { display: block; }
+
+    .agents-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+
+    .agent-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.2rem 1.3rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .agent-card.is-active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(91,91,214,0.07);
+    }
+
+    .agent-card.is-done {
+      border-color: #86efac;
+    }
+
+    .agent-num {
+      font-size: 11px;
+      color: var(--text-3);
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    .agent-name-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .agent-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-1);
+    }
+
+    .agent-status {
+      font-size: 10px;
+      font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 20px;
+    }
+
+    .status-wait   { background: #f5f5f5; color: var(--text-3); }
+    .status-active { background: var(--accent-light); color: var(--accent); }
+    .status-done   { background: var(--success-bg); color: var(--success); }
+
+    .agent-detail {
+      font-size: 12px;
+      color: var(--text-3);
+      line-height: 1.5;
+    }
+
+    .agent-bar {
+      position: absolute;
+      bottom: 0; left: 0;
+      height: 2.5px;
+      background: var(--accent);
+      border-radius: 0 2px 2px 0;
+      transition: width 1.5s ease;
+    }
+
+    .agent-bar.done { background: var(--success); }
+
+    /* ── Spinner ── */
+    .spin {
+      width: 12px; height: 12px;
+      border: 2px solid rgba(91,91,214,0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Report Section ── */
+    .report-section {
+      display: none;
+      animation: fadeUp 0.4s ease;
+    }
+    .report-section.visible { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .report-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      box-shadow: var(--shadow);
+    }
+
+    .report-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+      gap: 1rem;
+    }
+
+    .report-eyebrow {
+      font-size: 11px;
+      color: var(--text-3);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .report-heading {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      color: var(--text-1);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+
+    .btn-sm {
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-2);
+      cursor: pointer;
+      font-family: var(--font-body);
+      transition: all 0.18s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-sm.filled {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .btn-sm.filled:hover { background: #4a4ac4; }
+
+    /* ── Tabs ── */
+    .tabs-row {
+      display: flex;
+      gap: 2px;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      padding: 3px;
+      margin-bottom: 1.5rem;
+      width: fit-content;
+    }
+
+    .tab-btn {
+      padding: 7px 18px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-3);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      font-family: var(--font-body);
+      transition: all 0.18s;
+    }
+
+    .tab-btn.active {
+      background: var(--surface);
+      color: var(--text-1);
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── Report body ── */
+    .rs-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .rs-text {
+      font-size: 14px;
+      color: var(--text-2);
+      line-height: 1.8;
+      margin-bottom: 1.5rem;
+      font-weight: 300;
+    }
+
+    .bullet-item {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: flex-start;
+    }
+
+    .bullet-dot {
+      width: 5px; height: 5px;
+      background: var(--accent);
+      border-radius: 50%;
+      margin-top: 8px;
+      flex-shrink: 0;
+    }
+
+    .bullet-text {
+      font-size: 14px;
+      color: var(--text-2);
+      line-height: 1.75;
+      font-weight: 300;
+    }
+
+    .raw-text {
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.8;
+      white-space: pre-wrap;
+      font-weight: 300;
+    }
+
+    /* ── History ── */
+    .history-section {
+      margin-top: 2rem;
+    }
+
+    .history-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .history-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+
+    .history-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(91,91,214,0.1);
+    }
+
+    .hc-icon {
+      width: 32px; height: 32px;
+      background: var(--accent-light);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .hc-topic {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-1);
+      margin-bottom: 4px;
+      line-height: 1.4;
+    }
+
+    .hc-time {
+      font-size: 11px;
+      color: var(--text-3);
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 12px;
+      color: var(--text-3);
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 540px) {
+      .agents-grid { grid-template-columns: 1fr; }
+      .history-grid { grid-template-columns: 1fr 1fr; }
+      nav { padding: 1rem 1.25rem; }
+      .hero { padding: 3rem 1.25rem 2.5rem; }
+      .content { padding: 0 1.25rem 4rem; }
+      .report-top { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="nav-logo">✦ <span>Research</span></div>
+  <div class="nav-right">
+    <div class="nav-badge" id="agentBadge">4 agents ready</div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-eyebrow">Multi-agent AI system</div>
+  <h1>Research any topic <br><em>Instantly.</em></h1>
+  <p class="hero-sub">Four specialized AI agents working in sequence to deliver professional research reports on any subject.</p>
+
+  <!-- Search -->
+  <div class="search-container">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        id="topicInput"
+        placeholder="What do you want to research today?"
+        autocomplete="off"
+      />
+      <button id="researchBtn" onclick="startResearch()">
+        Research →
+      </button>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- Example chips -->
+  <div class="chips">
+    <div class="chip" onclick="setTopic('Future of remote work')">Future of remote work</div>
+    <div class="chip" onclick="setTopic('Electric vehicles in Nepal')">Electric vehicles in Nepal</div>
+    <div class="chip" onclick="setTopic('Generative AI in healthcare')">Generative AI in healthcare</div>
+    <div class="chip" onclick="setTopic('AI startups in India 2026')">AI startups in India 2026</div>
+  </div>
+</div>
+
+<!-- Main content -->
+<div class="content">
+
+  <!-- Agent Progress -->
+  <div class="progress-section" id="progressSection">
+    <div class="section-label">Agent progress</div>
+    <div class="agents-grid">
+
+      <div class="agent-card" id="agentCard1">
+        <div class="agent-num">01</div>
+        <div class="agent-name-row">
+          <div class="agent-name">Research</div>
+          <span class="agent-status status-wait" id="agentStatus1">Waiting</span>
+        </div>
+        <div class="agent-detail">Generates 3 sub-questions with detailed factual answers</div>
+        <div class="agent-bar" id="agentBar1" style="width:0%"></div>
+      </div>
+
+      <div class="agent-card" id="agentCard2">
+        <div class="agent-num">02</div>
+        <div class="agent-name-row">
+          <div class="agent-name">Summarise</div>
+          <span class="agent-status status-wait" id="agentStatus2">Waiting</span>
+        </div>
+        <div class="agent-detail">Extracts 5 key bullet points from the raw research</div>
+        <div class="agent-bar" id="agentBar2" style="width:0%"></div>
+      </div>
+
+      <div class="agent-card" id="agentCard3">
+        <div class="agent-num">03</div>
+        <div class="agent-name-row">
+          <div class="agent-name">Critique</div>
+          <span class="agent-status status-wait" id="agentStatus3">Waiting</span>
+        </div>
+        <div class="agent-detail">Identifies gaps and improves the summary quality</div>
+        <div class="agent-bar" id="agentBar3" style="width:0%"></div>
+      </div>
+
+      <div class="agent-card" id="agentCard4">
+        <div class="agent-num">04</div>
+        <div class="agent-name-row">
+          <div class="agent-name">Write report</div>
+          <span class="agent-status status-wait" id="agentStatus4">Waiting</span>
+        </div>
+        <div class="agent-detail">Formats everything into a professional final report</div>
+        <div class="agent-bar" id="agentBar4" style="width:0%"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Report -->
+  <div class="report-section" id="reportSection">
+    <div class="section-label">Research report</div>
+    <div class="report-card">
+
+      <div class="report-top">
+        <div>
+          <div class="report-eyebrow" id="reportEyebrow">Generated just now</div>
+          <div class="report-heading" id="reportHeading">Report</div>
+        </div>
+        <div class="btn-group">
+          <button class="btn-sm" onclick="copyReport()">📋 Copy</button>
+          <button class="btn-sm filled" onclick="downloadReport()">↓ Save</button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs-row">
+        <button class="tab-btn active" onclick="switchTab('report', this)">Full report</button>
+        <button class="tab-btn" onclick="switchTab('summary', this)">Summary</button>
+        <button class="tab-btn" onclick="switchTab('critique', this)">Critique</button>
+      </div>
+
+      <!-- Tab: Full Report -->
+      <div class="tab-content active" id="tabReport">
+        <div id="reportContent"></div>
+      </div>
+
+      <!-- Tab: Summary -->
+      <div class="tab-content" id="tabSummary">
+        <div class="rs-label">Key bullet points</div>
+        <div id="summaryContent"></div>
+      </div>
+
+      <!-- Tab: Critique -->
+      <div class="tab-content" id="tabCritique">
+        <div class="rs-label">Agent 3 critique & improvements</div>
+        <div class="raw-text" id="critiqueContent"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="history-section" id="historySection" style="display:none">
+    <div class="section-label">Recent reports</div>
+    <div class="history-grid" id="historyGrid"></div>
+  </div>
+
+</div>
+
+<footer>
+  Built with FastAPI · LangChain · Groq LLaMA 3.1 · ChromaDB
+</footer>
+
+<script>
+  const API = 'http://127.0.0.1:8000';
+  let currentReport = '';
+  let currentTopic  = '';
+
+  // ── Chip shortcut ──
+  function setTopic(t) {
+    document.getElementById('topicInput').value = t;
+    document.getElementById('topicInput').focus();
+  }
+
+  // ── Agent helpers ──
+  const AGENTS = [
+    { label: 'Researching...', delay: 7000  },
+    { label: 'Summarising...', delay: 14000 },
+    { label: 'Critiquing...',  delay: 22000 },
+    { label: 'Writing...',     delay: 30000 },
+  ];
+
+  function setAgent(n, state) {
+    // state: 'wait' | 'active' | 'done'
+    const card   = document.getElementById(`agentCard${n}`);
+    const status = document.getElementById(`agentStatus${n}`);
+    const bar    = document.getElementById(`agentBar${n}`);
+
+    card.className = 'agent-card' + (state === 'active' ? ' is-active' : state === 'done' ? ' is-done' : '');
+
+    if (state === 'wait') {
+      status.className = 'agent-status status-wait';
+      status.innerHTML = 'Waiting';
+      bar.style.width  = '0%';
+      bar.className    = 'agent-bar';
+    } else if (state === 'active') {
+      status.className = 'agent-status status-active';
+      status.innerHTML = AGENTS[n-1].label + ' <span class="spin"></span>';
+      bar.style.width  = '60%';
+      bar.className    = 'agent-bar';
+    } else {
+      status.className = 'agent-status status-done';
+      status.innerHTML = '✓ Done';
+      bar.style.width  = '100%';
+      bar.className    = 'agent-bar done';
+    }
+  }
+
+  function resetAgents() {
+    for (let i = 1; i <= 4; i++) setAgent(i, 'wait');
+  }
+
+  // ── Error helpers ──
+  function showError(msg) {
+    const b = document.getElementById('errorBox');
+    b.textContent = '⚠ ' + msg;
+    b.classList.add('visible');
+  }
+  function hideError() {
+    document.getElementById('errorBox').classList.remove('visible');
+  }
+
+  // ── Tabs ──
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    const map = { report: 'tabReport', summary: 'tabSummary', critique: 'tabCritique' };
+    document.getElementById(map[name]).classList.add('active');
+  }
+
+  // ── Format report markdown → HTML ──
+  function formatReport(text) {
+    return text
+      .replace(/^# (.+)$/gm,   '<h2 style="font-family:var(--font-display);font-size:22px;font-weight:400;color:var(--text-1);margin:0 0 0.75rem;letter-spacing:-0.02em">$1</h2>')
+      .replace(/^## (.+)$/gm,  '<h3 style="font-size:13px;font-weight:600;color:var(--text-2);margin:1.5rem 0 0.5rem;text-transform:uppercase;letter-spacing:0.06em">$1</h3>')
+      .replace(/^### (.+)$/gm, '<h4 style="font-size:14px;font-weight:600;color:var(--text-1);margin:1rem 0 0.4rem">$1</h4>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--text-1);font-weight:600">$1</strong>')
+      .replace(/^WEAKNESSES$/gm, '<div class="rs-label">WEAKNESSES</div>')
+      .replace(/^IMPROVEMENTS$/gm, '<div class="rs-label">IMPROVEMENTS</div>')
+      .replace(/^IMPROVED SUMMARY$/gm, '<div class="rs-label">IMPROVED SUMMARY</div>')
+      .replace(/^• (.+)$/gm,   '<div class="bullet-item"><div class="bullet-dot"></div><div class="bullet-text">$1</div></div>')
+      .replace(/^\* (.+)$/gm,  '<div class="bullet-item"><div class="bullet-dot"></div><div class="bullet-text">$1</div></div>')
+      .replace(/^---$/gm,      '<hr style="border:none;border-top:1px solid var(--border);margin:1.5rem 0">')
+      .replace(/\n\n/g, '<br>')
+  }
+
+  // ── Copy & Download ──
+  function copyReport() {
+    navigator.clipboard.writeText(currentReport).then(() => {
+      const btn = document.querySelector('.btn-sm');
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => btn.textContent = '📋 Copy', 2000);
+    });
+  }
+
+  function downloadReport() {
+    const blob = new Blob([currentReport], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = currentTopic.replace(/\s+/g, '_').toLowerCase() + '_report.txt';
+    a.click();
+  }
+
+  // ── Load history ──
+  async function loadHistory() {
+    try {
+      const res  = await fetch(`${API}/reports`);
+      const data = await res.json();
+      if (!data.reports || data.reports.length === 0) return;
+
+      const icons = ['📄','🔍','💡','📊','🌍','🤖','⚡','🏥'];
+      const grid  = document.getElementById('historyGrid');
+      grid.innerHTML = data.reports.slice(0, 6).map((f, i) => {
+        const topic = f.replace(/_report\.txt$/, '').replace(/_/g, ' ');
+        return `<div class="history-card" onclick="loadHistoryReport('${f}')">
+          <div class="hc-icon">${icons[i % icons.length]}</div>
+          <div class="hc-topic">${topic}</div>
+          <div class="hc-time">Saved report</div>
+        </div>`;
+      }).join('');
+
+      document.getElementById('historySection').style.display = 'block';
+    } catch(e) { /* silently fail */ }
+  }
+
+   async function loadHistoryReport(filename) {
+    try {
+        const res  = await fetch(`${API}/reports/${filename}`);
+        const data = await res.json();
+        currentReport = data.content;
+        currentTopic  = filename.replace(/_report\.txt$/, '').replace(/_/g, ' ');
+
+        document.getElementById('reportHeading').textContent = currentTopic;
+        document.getElementById('reportEyebrow').textContent = 'Saved report';
+        document.getElementById('reportContent').innerHTML   = formatReport(data.content);
+
+        // ✅ Extract summary from report content itself
+        const lines = data.content.split('\n');
+        const bulletLines = lines.filter(l =>
+            l.trim().startsWith('•') || l.trim().startsWith('*')
+        );
+
+        if (bulletLines.length > 0) {
+            document.getElementById('summaryContent').innerHTML = bulletLines.map(b =>
+                `<div class="bullet-item">
+                    <div class="bullet-dot"></div>
+                    <div class="bullet-text">${b.replace(/^[•*]\s*/, '')}</div>
+                </div>`
+            ).join('');
+        } else {
+            // fallback — show first 3 paragraphs
+            const paras = lines.filter(l => l.trim().length > 60).slice(0, 3);
+            document.getElementById('summaryContent').innerHTML =
+                paras.map(p => `<div class="rs-text">${p}</div>`).join('');
+        }
+
+        // ✅ Critique — note it's not saved in txt file
+        document.getElementById('critiqueContent').textContent =
+            'Critique is only available for newly researched topics. Run a new research to see the critique.';
+
+        document.getElementById('reportSection').classList.add('visible');
+        document.getElementById('reportSection').scrollIntoView({ behavior: 'smooth' });
+
+    } catch(e) {
+        showError('Could not load report.');
+    }
+}
+
+  // ── Main research function ──
+  async function startResearch() {
+    const topic = document.getElementById('topicInput').value.trim();
+    if (!topic) { showError('Please enter a research topic.'); return; }
+    hideError();
+
+    const btn = document.getElementById('researchBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Researching...';
+    document.getElementById('agentBadge').textContent = '4 agents running';
+
+    // Show progress
+    document.getElementById('progressSection').classList.add('visible');
+    document.getElementById('reportSection').classList.remove('visible');
+    resetAgents();
+
+    // Animate agents
+    setAgent(1, 'active');
+    const timers = [
+      setTimeout(() => { setAgent(1, 'done'); setAgent(2, 'active'); }, AGENTS[0].delay),
+      setTimeout(() => { setAgent(2, 'done'); setAgent(3, 'active'); }, AGENTS[1].delay),
+      setTimeout(() => { setAgent(3, 'done'); setAgent(4, 'active'); }, AGENTS[2].delay),
+    ];
+
+    try {
+      const res = await fetch(`${API}/research`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ topic })
+      });
+
+      timers.forEach(t => clearTimeout(t));
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Research failed');
+      }
+
+      const data = await res.json();
+
+      // Mark all done
+      for (let i = 1; i <= 4; i++) setAgent(i, 'done');
+
+      // Store
+      currentReport = data.report;
+      currentTopic  = data.topic;
+
+      // Populate report
+      const now = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+      document.getElementById('reportEyebrow').textContent = `Generated ${now}`;
+      document.getElementById('reportHeading').textContent = data.topic;
+      document.getElementById('reportContent').innerHTML   = formatReport(data.report);
+
+      // Summary tab — render bullets
+      const bullets = data.summary.split('\n').filter(l => l.startsWith('•'));
+      document.getElementById('summaryContent').innerHTML = bullets.map(b =>
+        `<div class="bullet-item"><div class="bullet-dot"></div><div class="bullet-text">${b.replace('• ','')}</div></div>`
+      ).join('') || `<div class="rs-text">${data.summary}</div>`;
+
+      // Critique tab
+      document.getElementById('critiqueContent').textContent = data.critique;
+
+      // Show report
+      document.getElementById('reportSection').classList.add('visible');
+      setTimeout(() => document.getElementById('reportSection').scrollIntoView({ behavior:'smooth', block:'start' }), 100);
+
+      // Refresh history
+      loadHistory();
+
+    } catch(err) {
+      timers.forEach(t => clearTimeout(t));
+      resetAgents();
+      document.getElementById('progressSection').classList.remove('visible');
+      showError(err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Research →';
+      document.getElementById('agentBadge').textContent = '4 agents ready';
+    }
+  }
+
+  // Enter key support
+  document.getElementById('topicInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') startResearch();
+  });
+
+  // Load history on start
+  loadHistory();
+</script>
+</body>
+</html>
+

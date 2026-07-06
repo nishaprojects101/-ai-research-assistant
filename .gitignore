@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+chroma/
+.chromadb/
+*_report.txt
+AI-Research-Assistant/
