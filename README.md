@@ -16,3 +16,6 @@ Agents
 1. pip install -r requirements.txt
 2. Add GROQ_API_KEY to .env
 3. uvicorn Main:app --reload
+## Live Demo
+Frontend: https://nishaprojects101.github.io/ai-research-assistant-frontend
+Backend:  https://ai-research-assistant-znno.onrender.com/docs
